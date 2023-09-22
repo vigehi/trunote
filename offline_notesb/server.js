@@ -27,16 +27,16 @@ app.post('/notes', async function(req, res){
     
     try {
         await newNote.save();
-        res.status(201).json(newNote)
+        res.status(201).send(newNote)
     } catch (err) {
             console.error('Error inserting note into MongoDB: ', err);
             res.status(500).send('Internal Server Error');
     }
 });
 
-app.get('/notes', async function(req, res){
-    const { syncStatus } = req.query.syncStatus;
-    const notes = await Note.find({syncStatus})
+app.get('/notes/sync', async function(req, res){
+    const syncStatus = req.query.syncStatus;
+    const notes = await Note.find({ syncStatus: "Unsynced" });
     
     try {
         res.status(200).send(notes);
@@ -48,23 +48,22 @@ app.get('/notes', async function(req, res){
 });
 
 
-app.get('/notes/:noteID', function(req, res){
-    var noteID = req.params.noteID;
+app.get('/notes/:noteID', async function(req, res){
+    const note = await Note.find({ noteID: req.params.noteID });
 
-    db.collection('notes').findOne({ noteID }, function(err, note) {
-        if (err) {
-            console.error('Error fetching note from MongoDB:', err);
-            res.status(500).json({ message: 'Internal Server Error' });
-            return;
-        }
-
+    try { 
         if (!note) {
-            res.status(404).json({ message: 'Note not found' });
+            res.status(404).send('Note not found');
         } else {
-            res.status(200).json(note);
+            res.status(200).send(note);
         }
-    });
+    } catch (err) {
+        console.error('Error fetching note from MongoDB:', err);
+        res.status(500).send('Internal Server Error');
+    }
+    
 });
+
 
 app.put('/notes/:noteID', function(req, res){
     var noteID = req.params.noteID;
