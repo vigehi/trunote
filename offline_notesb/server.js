@@ -135,24 +135,17 @@ app.delete('/notes/:noteID', function(req, res){
 });
 
 // Define a route for syncing (sending notes to the server)
-app.post('/sync', function(req, res){
-    var unsyncedNotes = notesDB.filter(note => note.syncStatus === "Unsynced");
+app.get('/sync', async function(req, res){
+    const note = await Note.find({ syncStatus: "Unsynced" });
 
     // Implement actual synchronization logic here
 
-    res.status(200).json(unsyncedNotes);
+    res.status(200).send(note);
 });
 
-// Middleware for logging
-app.use(function(req, res){
-   console.log('End');
-});
 
 // Start the Express.js server
 app.listen(3000, function(){
     console.log('Server is running on port 3000');
 });
 
-function generateNoteID() {
-    return Math.random().toString(36).substring(7);
-}
