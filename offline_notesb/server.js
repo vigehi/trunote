@@ -34,10 +34,8 @@ app.post('/notes', async function(req, res){
     }
 });
 
-app.get('/notes/sync', async function(req, res){
-    const syncStatus = req.query.syncStatus;
-    const notes = await Note.find({ syncStatus: "Unsynced" });
-    
+app.get('/notes', async function(req, res){
+    const notes = await Note.find({ syncStatus: req.query.syncStatus });
     try {
         res.status(200).send(notes);
     } catch (err) {
