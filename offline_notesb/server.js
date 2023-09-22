@@ -2,7 +2,11 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 
+const Note = require('./models/note')
+
 var app = express();
+app.use(bodyParser.json());
+
 const mongoUrl = 'mongodb://localhost:27017'; 
 const dbName = 'notesdb'; 
 const dataBaseUrl = `${mongoUrl}/${dbName}`
@@ -11,33 +15,23 @@ mongoose.connect(dataBaseUrl)
         .then(() => console.log("You are connected to mongoDB..."))
 
 
-app.post('/notes', function(req, res){
+app.post('/notes', async function(req, res){
     var noteID = generateNoteID();
-    var syncStatus = "Unsynced";
-    var version = 1;
-    var timestamp = new Date().toISOString();
     var { title, content } = req.body;
 
-    var newNote = {
+    const newNote = new Note({
         noteID,
         title,
         content,
-        syncStatus,
-        version,
-        dateCreated: timestamp,
-        dateModified: timestamp,
-        isDeleted: false
-    };
-
-    db.collection('notes').insertOne(newNote, function(err, result) {
-        if (err) {
-            console.error('Error inserting note into MongoDB:', err);
-            res.status(500).json({ message: 'Internal Server Error' });
-            return;
-        }
-        
-        res.status(201).json(newNote);
     });
+    
+    try {
+        await newNote.save();
+        res.status(201).json(newNote)
+    } catch (err) {
+            console.error('Error inserting note into MongoDB: ', err);
+            res.status(500).send('Internal Server Error');
+    }
 });
 
 app.get('/notes', function(req, res){
