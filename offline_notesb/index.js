@@ -8,7 +8,7 @@ const Note = require("./models/note");
 var app = express();
 app.use(bodyParser.json());
 
-const dataBaseUrl = process.env.DATABASE_URL
+const dataBaseUrl = process.env.DATABASE_URL;
 
 mongoose
   .connect(dataBaseUrl)
@@ -68,10 +68,10 @@ app.get("/notes/:noteID", async function (req, res) {
 });
 
 app.put("/notes/:noteID", async function (req, res) {
-    const note = await Note.findOne({ noteID: req.params.noteID })
-    
-    try {
-        if(!note) return res.status(404).send("Note not found");
+  const note = await Note.findOne({ noteID: req.params.noteID });
+
+  try {
+    if (!note) return res.status(404).send("Note not found");
     note.title = req.body.title;
     note.content = req.body.content;
 
@@ -81,47 +81,31 @@ app.put("/notes/:noteID", async function (req, res) {
     if (note.syncStatus === "Synced") {
       note.syncStatus = "Unsynced";
     }
-        await note.save()
-        res.status(200).json(note);
-        
-    } catch (err) {
-        console.error("Error updating note in MongoDB:", err);
-        res.status(500).json({ message: "Internal Server Error" });
-   }
-               
+    await note.save();
+    res.status(200).json(note);
+  } catch (err) {
+    console.error("Error updating note in MongoDB:", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
-app.delete("/notes/:noteID", function (req, res) {
+app.put("/notes/:noteID", async function (req, res) {
   var noteID = req.params.noteID;
+  const note = Note.find({ noteID });
 
-  db.collection("notes").findOne({ noteID }, function (err, note) {
-    if (err) {
-      console.error("Error fetching note from MongoDB:", err);
-      res.status(500).json({ message: "Internal Server Error" });
-      return;
-    }
+  try {
+    if (!note) return res.status(404).send("Note not found");
 
-    if (!note) {
-      res.status(404).json({ message: "Note not found" });
-    } else {
-      note.isDeleted = true;
-      note.syncStatus = "Unsynced";
+    note.isDeleted = true;
+    note.syncStatus = "Unsynced";
 
-      db.collection("notes").updateOne(
-        { noteID },
-        { $set: note },
-        function (err) {
-          if (err) {
-            console.error("Error updating note in MongoDB:", err);
-            res.status(500).json({ message: "Internal Server Error" });
-            return;
-          }
+    await note.save();
 
-          res.status(200).json({ message: "Note marked as deleted" });
-        }
-      );
-    }
-  });
+    return res.status(200).send("Note marked as updated");
+  } catch (err) {
+    console.error("Error fetching note from MongoDB:", err);
+    return res.status(500).send("Internal Server Error");
+  }
 });
 
 // Define a route for syncing (sending notes to the server)
