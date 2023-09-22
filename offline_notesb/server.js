@@ -7,11 +7,11 @@ const Note = require('./models/note')
 var app = express();
 app.use(bodyParser.json());
 
-const mongoUrl = 'mongodb://localhost:27017'; 
-const dbName = 'notesdb'; 
-const dataBaseUrl = `${mongoUrl}/${dbName}`
+// const mongoUrl = 'mongodb://localhost:27017'; 
+// const dbName = 'notesdb'; 
+// const dataBaseUrl = `${mongoUrl}/${dbName}`
 
-mongoose.connect(dataBaseUrl)
+mongoose.connect("mongodb+srv://OLUola1992:OLUola1992@cluster0.2fe17rz.mongodb.net/?retryWrites=true&w=majority")
         .then(() => console.log("You are connected to mongoDB..."))
 
 
