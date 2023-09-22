@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'NoteEditorAddScreen.dart';
 import 'NoteEditorEditScreen.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+
 
 void main() {
   runApp(const OfflineNotesApp());
@@ -22,7 +26,82 @@ class OfflineNotesApp extends StatelessWidget {
   }
 }
 
-class DashboardScreen extends StatelessWidget {
+class Note {
+  final String id;
+  final String noteID;
+  final String title;
+  final String content;
+  final String dateCreated;
+  final String dateModified;
+  String syncStatus;
+  final int version;
+  bool isDeleted;
+
+  Note({
+    required this.id,
+    required this.noteID,
+    required this.title,
+    required this.content,
+    required this.dateCreated,
+    required this.dateModified,
+    required this.syncStatus,
+    required this.version,
+    required this.isDeleted,
+  });
+
+  factory Note.fromJson(Map<String, dynamic> json) {
+    return Note(
+      id: json['_id'] ?? '',
+      noteID: json['noteID'] ?? '',
+      title: json['title'] ?? '',
+      content: json['content'] ?? '',
+      dateCreated: json['dateCreated'] ?? '',
+      dateModified: json['dateModified'] ?? '',
+      syncStatus: json['syncStatus'] ?? '',
+      version: json['version'] ?? 1,
+      isDeleted: json['isDeleted'] ?? false,
+    );
+  }
+
+  void markAsDeleted() {
+    isDeleted = true;
+    syncStatus = 'Unsynced';
+  }
+}
+
+class DashboardScreen extends StatefulWidget {
+  @override
+  _DashboardScreenState createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  List<Note> notes = [];
+  DateTime? lastSyncDateTime;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchNotes();
+  }
+
+  Future<void> fetchNotes() async {
+    try {
+      final response = await http
+          .get(Uri.parse('https://offline-notes-backend.onrender.com/notes'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> responseData = json.decode(response.body);
+        setState(() {
+          notes = responseData.map((data) => Note.fromJson(data)).toList();
+        });
+      } else {
+        print('Failed to load notes - ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching notes: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,7 +121,6 @@ class DashboardScreen extends StatelessWidget {
                   Text(
                     'Offline',
                     style: TextStyle(
-                      color: const Color(0xFF007A),
                       fontSize: 20.0,
                       fontWeight: FontWeight.bold,
                     ),
@@ -59,15 +137,20 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          if (lastSyncDateTime != null)
+            Text(
+              'Last Sync: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(lastSyncDateTime!)}',
+              style: TextStyle(
+                fontSize: 14,
+              ),
+            ),
           Stack(
             children: [
               Icon(
                 Icons.wifi,
-                color: true
-                    ? Colors.red
-                    : Colors.white, 
+                color: true ? Colors.red : Colors.white,
               ),
-              if (true) 
+              if (true)
                 Positioned.fill(
                   child: Align(
                     alignment: Alignment.center,
@@ -83,13 +166,13 @@ class DashboardScreen extends StatelessWidget {
                 ),
             ],
           ),
-          SizedBox(width: 16.0), 
+          SizedBox(width: 16.0),
         ],
       ),
       body: ListView.builder(
-        itemCount: dummyNotes.length,
+        itemCount: notes.length,
         itemBuilder: (context, index) {
-          final note = dummyNotes[index];
+          final note = notes[index];
           return Card(
             margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             elevation: 4.0,
@@ -98,7 +181,11 @@ class DashboardScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => NoteEditorEditScreen(),
+                    builder: (context) => NoteEditorEditScreen(
+                      noteId: note.noteID,
+                      initialTitle: note.title,
+                      initialDescription: note.content,
+                    ),
                   ),
                 );
               },
@@ -112,7 +199,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
                 subtitle: Text(
-                  'Version ${note.version} - ${note.syncStatus}',
+                  note.content,
                   style: TextStyle(
                     fontSize: 14.0,
                   ),
@@ -142,6 +229,29 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  void _updateSyncStatus(Note note, String newSyncStatus) async {
+    setState(() {
+      note.syncStatus = newSyncStatus;
+      lastSyncDateTime = DateTime.now();
+    });
+
+    final response = await http.put(
+      Uri.parse(
+          'https://offline-notes-backend.onrender.com/notes/${note.noteID}'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"syncStatus": newSyncStatus}),
+    );
+
+    if (response.statusCode == 200) {
+      print('Sync status updated successfully');
+    } else {
+      print('Failed to update sync status - ${response.statusCode}');
+      setState(() {
+        note.syncStatus = 'Unsynced';
+      });
+    }
+  }
+
   void _showSyncStatusModal(BuildContext context, Note note) {
     showDialog(
       context: context,
@@ -153,7 +263,7 @@ class DashboardScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Its important to choose carefully to ensure you dont lose any critical information.',
+                'It\'s important to choose carefully to ensure you don\'t lose any critical information.',
                 style: TextStyle(
                   fontSize: 14,
                 ),
@@ -169,19 +279,15 @@ class DashboardScreen extends StatelessWidget {
           actions: [
             ElevatedButton(
               onPressed: () {
-                // Handle "Keep Local" action
-                // This is where you can override the server's version with your local note
-                // Update the note's version and syncStatus accordingly
-                Navigator.of(context).pop(); // Close the dialog
+                _updateSyncStatus(note, 'Local');
+                Navigator.of(context).pop();
               },
               child: Text('Keep Local'),
             ),
             ElevatedButton(
               onPressed: () {
-                // Handle "Use Server" action
-                // This is where you can override your local note with the server's version
-                // Update the note's version and syncStatus accordingly
-                Navigator.of(context).pop(); // Close the dialog
+                _updateSyncStatus(note, 'Server');
+                Navigator.of(context).pop();
               },
               child: Text('Use Server'),
             ),
@@ -191,47 +297,3 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 }
-
-class Note {
-  final String noteID;
-  String title;
-  String content;
-  bool isDeleted;
-  int version;
-  String syncStatus;
-
-  Note({
-    required this.noteID,
-    required this.title,
-    required this.content,
-    this.isDeleted = false,
-    this.version = 1,
-    this.syncStatus = 'Unsynced',
-  });
-
-  // Method to mark the note as deleted
-  void markAsDeleted() {
-    isDeleted = true;
-    syncStatus = 'Unsynced';
-  }
-}
-
-List<Note> dummyNotes = [
-  Note(
-    noteID: '1',
-    title: 'Sample Note 1',
-    content: 'This is the content of sample note 1.',
-    syncStatus: 'Synced',
-    version: 1,
-    isDeleted: false,
-  ),
-  Note(
-    noteID: '2',
-    title: 'Sample Note 2',
-    content: 'This is the content of sample note 2.',
-    syncStatus: 'Unsynced',
-    version: 2,
-    isDeleted: false,
-  ),
-  // Add more dummy notes as needed
-];
