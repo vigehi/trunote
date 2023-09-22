@@ -1,24 +1,14 @@
 var express = require('express');
-var app = express();
 var bodyParser = require('body-parser');
-var MongoClient = require('mongodb').MongoClient;
+var mongoose = require('mongoose');
 
-app.use(bodyParser.json());
-
+var app = express();
 const mongoUrl = 'mongodb://localhost:27017'; 
 const dbName = 'notesdb'; 
+const dataBaseUrl = `${mongoUrl}/${dbName}`
 
-var db;
-
-MongoClient.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, client) {
-   if (err) {
-       console.error('Error connecting to MongoDB:', err);
-       process.exit(1);
-   }
-   
-   db = client.db(dbName);
-   console.log('Connected to MongoDB');
-});
+mongoose.connect(dataBaseUrl)
+        .then(() => console.log("You are connected to mongoDB..."))
 
 
 app.post('/notes', function(req, res){
