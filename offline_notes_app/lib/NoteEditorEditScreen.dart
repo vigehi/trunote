@@ -10,14 +10,12 @@ class NoteEditorEditScreen extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.save),
             onPressed: () {
-              // Save the edited note and perform other actions as needed
-              Navigator.pop(context); // Navigate back to the homepage
+              Navigator.pop(context); 
             },
           ),
           IconButton(
             icon: Icon(Icons.delete),
             onPressed: () {
-              // Show a confirmation dialog before deleting
               showDialog(
                 context: context,
                 builder: (context) {
@@ -27,17 +25,14 @@ class NoteEditorEditScreen extends StatelessWidget {
                     actions: [
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).pop(); // Close the dialog
+                          Navigator.of(context).pop();
                         },
                         child: Text('Cancel'),
                       ),
                       TextButton(
                         onPressed: () {
-                          // Mark the note as deleted and navigate back
-                          // final Note editedNote = ...; // Get the edited note
-                          // editedNote.markAsDeleted();
-                          Navigator.of(context).pop(); // Close the dialog
-                          Navigator.pop(context); // Navigate back to the homepage
+                          Navigator.of(context).pop(); 
+                          Navigator.pop(context); 
                         },
                         child: Text('Delete'),
                       ),
@@ -57,7 +52,6 @@ class NoteEditorEditScreen extends StatelessWidget {
               decoration: InputDecoration(
                 labelText: 'Note Title',
               ),
-              // Set the initial text for editing
               controller: TextEditingController(text: 'Initial Title'),
             ),
           ),
@@ -68,7 +62,6 @@ class NoteEditorEditScreen extends StatelessWidget {
               decoration: InputDecoration(
                 labelText: 'Note Description',
               ),
-              // Set the initial text for editing
               controller: TextEditingController(text: 'Initial Description'),
             ),
           ),

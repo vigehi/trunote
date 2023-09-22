@@ -59,14 +59,15 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          // Add Wi-Fi icon with conditional color
           Stack(
             children: [
               Icon(
                 Icons.wifi,
-                color: true ? Colors.red : Colors.white, // Replace 'true' with your condition
+                color: true
+                    ? Colors.red
+                    : Colors.white, 
               ),
-              if (true) // Replace 'true' with your condition
+              if (true) 
                 Positioned.fill(
                   child: Align(
                     alignment: Alignment.center,
@@ -82,7 +83,7 @@ class DashboardScreen extends StatelessWidget {
                 ),
             ],
           ),
-          SizedBox(width: 16.0), // Add spacing between icons
+          SizedBox(width: 16.0), 
         ],
       ),
       body: ListView.builder(
@@ -92,31 +93,8 @@ class DashboardScreen extends StatelessWidget {
           return Card(
             margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             elevation: 4.0,
-            child: ListTile(
-              contentPadding: EdgeInsets.all(16.0),
-              title: Text(
-                note.title,
-                style: TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Text(
-                'Version ${note.version} - ${note.syncStatus}',
-                style: TextStyle(
-                  fontSize: 14.0,
-                ),
-              ),
-              trailing: note.syncStatus == 'Unsynced'
-                  ? IconButton(
-                      icon: Icon(Icons.cloud_off, color: Colors.red),
-                      onPressed: () {
-                        _showSyncStatusModal(context, note);
-                      },
-                    )
-                  : Icon(Icons.cloud_done, color: Colors.green),
+            child: GestureDetector(
               onTap: () {
-                // Navigate to NoteEditorEditScreen when clicking the note title
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -124,6 +102,30 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 );
               },
+              child: ListTile(
+                contentPadding: EdgeInsets.all(16.0),
+                title: Text(
+                  note.title,
+                  style: TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  'Version ${note.version} - ${note.syncStatus}',
+                  style: TextStyle(
+                    fontSize: 14.0,
+                  ),
+                ),
+                trailing: note.syncStatus == 'Unsynced'
+                    ? IconButton(
+                        icon: Icon(Icons.cloud_off, color: Colors.red),
+                        onPressed: () {
+                          _showSyncStatusModal(context, note);
+                        },
+                      )
+                    : Icon(Icons.cloud_done, color: Colors.green),
+              ),
             ),
           );
         },
@@ -140,55 +142,54 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-void _showSyncStatusModal(BuildContext context, Note note) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: Text('Sync Status & Conflict Resolution'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Confirmation Message for Note:',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+  void _showSyncStatusModal(BuildContext context, Note note) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Sync Status & Conflict Resolution'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Its important to choose carefully to ensure you dont lose any critical information.',
+                style: TextStyle(
+                  fontSize: 14,
+                ),
               ),
+              Text(
+                note.title,
+                style: TextStyle(
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                // Handle "Keep Local" action
+                // This is where you can override the server's version with your local note
+                // Update the note's version and syncStatus accordingly
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Keep Local'),
             ),
-            Text(
-              note.title,
-              style: TextStyle(
-                fontSize: 14,
-              ),
+            ElevatedButton(
+              onPressed: () {
+                // Handle "Use Server" action
+                // This is where you can override your local note with the server's version
+                // Update the note's version and syncStatus accordingly
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Use Server'),
             ),
           ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              // Handle "Keep Local" action
-              // This is where you can override the server's version with your local note
-              // Update the note's version and syncStatus accordingly
-              Navigator.of(context).pop(); // Close the dialog
-            },
-            child: Text('Keep Local'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // Handle "Use Server" action
-              // This is where you can override your local note with the server's version
-              // Update the note's version and syncStatus accordingly
-              Navigator.of(context).pop(); // Close the dialog
-            },
-            child: Text('Use Server'),
-          ),
-        ],
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 }
 
 class Note {

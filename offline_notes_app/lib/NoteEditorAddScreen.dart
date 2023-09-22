@@ -10,16 +10,15 @@ class NoteEditorAddScreen extends StatelessWidget {
             Navigator.pop(context);
           },
           child: Image.asset(
-            'assets/back.png', // Replace with the correct path to your image
-            width: 15.0, // Adjust the width as needed
-            height: 15.0, // Adjust the height as needed
+            'assets/back.png',
+            width: 15.0,
+            height: 15.0,
           ),
         ),
         actions: [
           IconButton(
             icon: Icon(Icons.save),
             onPressed: () {
-              // Save the note and perform other actions as needed
               Navigator.pop(context);
             },
           ),
@@ -32,17 +31,17 @@ class NoteEditorAddScreen extends StatelessWidget {
             child: TextField(
               decoration: InputDecoration(
                 labelText: 'Note Title',
-                border: InputBorder.none, // Remove the border
+                border: InputBorder.none,
               ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
-              maxLines: 5, // Allow multiple lines for the description
+              maxLines: 5,
               decoration: InputDecoration(
                 labelText: 'Note content',
-                border: InputBorder.none, // Remove the border
+                border: InputBorder.none,
               ),
             ),
           ),
