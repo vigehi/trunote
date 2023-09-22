@@ -34,23 +34,19 @@ app.post('/notes', async function(req, res){
     }
 });
 
-app.get('/notes', function(req, res){
-    var syncStatusFilter = req.query.syncStatus;
-    var filter = {};
-    if (syncStatusFilter) {
-        filter.syncStatus = syncStatusFilter;
+app.get('/notes', async function(req, res){
+    const { syncStatus } = req.query.syncStatus;
+    const notes = await Note.find({syncStatus})
+    
+    try {
+        res.status(200).send(notes);
+    } catch (err) {
+        console.error('Error fetching notes from MongoDB:', err);
+        res.status(500).send('Internal Server Error');
     }
 
-    db.collection('notes').find(filter).toArray(function(err, notes) {
-        if (err) {
-            console.error('Error fetching notes from MongoDB:', err);
-            res.status(500).json({ message: 'Internal Server Error' });
-            return;
-        }
-
-        res.status(200).json(notes);
-    });
 });
+
 
 app.get('/notes/:noteID', function(req, res){
     var noteID = req.params.noteID;
