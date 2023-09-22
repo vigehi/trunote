@@ -31,6 +31,17 @@ app.post("/notes", async function (req, res) {
   }
 });
 
+//Get all notes from the database
+app.get("/notes", async function (req, res) {
+  const notes = await Note.find();
+  try {
+    res.status(200).send(notes);
+  } catch (err) {
+    console.error("Error fetching notes from MongoDB:", err);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
 app.get("/notes", async function (req, res) {
   const notes = await Note.find({ syncStatus: req.query.syncStatus });
   try {
