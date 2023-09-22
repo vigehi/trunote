@@ -8,8 +8,6 @@ const Note = require("./models/note");
 var app = express();
 app.use(bodyParser.json());
 
-// const mongoUrl = 'mongodb://localhost:27017';
-// const dbName = 'notesdb';
 const dataBaseUrl = process.env.DATABASE_URL
 
 mongoose
@@ -58,48 +56,28 @@ app.get("/notes/:noteID", async function (req, res) {
   }
 });
 
-app.put("/notes/:noteID", function (req, res) {
-  var noteID = req.params.noteID;
+app.put("/notes/:noteID", async function (req, res) {
+    const note = await Note.findOne({ noteID: req.params.noteID })
+    
+    try {
+        if(!note) return res.status(404).send("Note not found");
+    note.title = req.body.title;
+    note.content = req.body.content;
 
-  db.collection("notes").findOne({ noteID }, function (err, note) {
-    if (err) {
-      console.error("Error fetching note from MongoDB:", err);
-      res.status(500).json({ message: "Internal Server Error" });
-      return;
+    note.dateModified = new Date().toISOString();
+    note.version++;
+
+    if (note.syncStatus === "Synced") {
+      note.syncStatus = "Unsynced";
     }
-
-    if (!note) {
-      res.status(404).json({ message: "Note not found" });
-    } else {
-      if (req.body.title) {
-        note.title = req.body.title;
-      }
-      if (req.body.content) {
-        note.content = req.body.content;
-      }
-
-      note.dateModified = new Date().toISOString();
-      note.version++;
-
-      if (note.syncStatus === "Synced") {
-        note.syncStatus = "Unsynced";
-      }
-
-      db.collection("notes").updateOne(
-        { noteID },
-        { $set: note },
-        function (err) {
-          if (err) {
-            console.error("Error updating note in MongoDB:", err);
-            res.status(500).json({ message: "Internal Server Error" });
-            return;
-          }
-
-          res.status(200).json(note);
-        }
-      );
-    }
-  });
+        await note.save()
+        res.status(200).json(note);
+        
+    } catch (err) {
+        console.error("Error updating note in MongoDB:", err);
+        res.status(500).json({ message: "Internal Server Error" });
+   }
+               
 });
 
 app.delete("/notes/:noteID", function (req, res) {
